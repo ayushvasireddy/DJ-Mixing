@@ -1,0 +1,380 @@
+<title>AI DJ</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #0b0d12;
+    --card: #151822;
+    --card-border: #262b3a;
+    --text: #e8eaf0;
+    --muted: #8a91a6;
+    --accent: #7c5cff;
+    --accent-2: #22d3c5;
+    --low: #4b7bec;
+    --medium: #22d3c5;
+    --high: #f5b83d;
+    --peak: #ff5c7c;
+    --danger: #ff5c7c;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    padding: 32px 16px 64px;
+  }
+  main { width: 100%; max-width: 640px; }
+  h1 { font-size: 1.5rem; margin: 0 0 4px; }
+  .subtitle { color: var(--muted); margin: 0 0 28px; font-size: 0.95rem; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    padding: 22px;
+    margin-bottom: 20px;
+  }
+  .card h2 { margin: 0 0 16px; font-size: 1.05rem; }
+  label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 6px; }
+  .field { margin-bottom: 16px; }
+  input[type=text], select {
+    width: 100%;
+    background: #0f1119;
+    border: 1px solid var(--card-border);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 0.95rem;
+  }
+  .row { display: flex; gap: 12px; }
+  .row > * { flex: 1; }
+  .checkbox-row { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+  .checkbox-row input { width: 16px; height: 16px; }
+  .checkbox-row label { margin: 0; color: var(--text); }
+  button {
+    font-size: 0.95rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 9px;
+    padding: 12px 18px;
+    cursor: pointer;
+    transition: opacity 0.15s ease;
+  }
+  button:hover { opacity: 0.88; }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-primary { background: var(--accent); color: white; width: 100%; }
+  .btn-danger { background: var(--danger); color: white; width: 100%; }
+  .btn-secondary {
+    background: transparent;
+    border: 1px solid var(--card-border);
+    color: var(--text);
+  }
+  .upload-zone {
+    border: 1.5px dashed var(--card-border);
+    border-radius: 10px;
+    padding: 18px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.85rem;
+    cursor: pointer;
+  }
+  .upload-zone.drag { border-color: var(--accent); color: var(--text); }
+  .file-list { margin-top: 10px; font-size: 0.82rem; color: var(--muted); max-height: 90px; overflow-y: auto; }
+  .banner {
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 0.88rem;
+    margin-bottom: 16px;
+  }
+  .banner.error { background: rgba(255, 92, 124, 0.12); color: var(--danger); border: 1px solid rgba(255, 92, 124, 0.35); }
+  .banner.info { background: rgba(124, 92, 255, 0.12); color: var(--accent); border: 1px solid rgba(124, 92, 255, 0.35); }
+  .now-playing { text-align: center; padding: 10px 0 20px; }
+  .now-playing .title { font-size: 1.35rem; font-weight: 700; margin-bottom: 4px; }
+  .now-playing .meta { color: var(--muted); font-size: 0.9rem; }
+  .up-next { text-align: center; color: var(--muted); font-size: 0.85rem; margin-bottom: 20px; }
+  .meter-label { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 8px; }
+  .meter-label .level { font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; }
+  .meter {
+    height: 14px;
+    border-radius: 7px;
+    background: #0f1119;
+    border: 1px solid var(--card-border);
+    overflow: hidden;
+    display: flex;
+    margin-bottom: 24px;
+  }
+  .meter .zone { flex: 1; position: relative; border-right: 1px solid var(--bg); }
+  .meter .zone:last-child { border-right: none; }
+  .meter .zone.lit.low { background: var(--low); }
+  .meter .zone.lit.medium { background: var(--medium); }
+  .meter .zone.lit.high { background: var(--high); }
+  .meter .zone.lit.peak { background: var(--peak); }
+  .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px; }
+  .controls button { padding: 16px; font-size: 1rem; }
+  .btn-hype { background: var(--peak); color: white; }
+  .btn-chill { background: var(--low); color: white; }
+  .btn-next { background: var(--card-border); color: var(--text); }
+  .btn-hold { background: var(--card-border); color: var(--text); }
+  .history { font-size: 0.85rem; color: var(--muted); margin-top: 18px; }
+  .history ul { margin: 8px 0 0; padding-left: 18px; }
+  .spinner {
+    width: 22px; height: 22px; border-radius: 50%;
+    border: 3px solid var(--card-border);
+    border-top-color: var(--accent);
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 12px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .center { text-align: center; }
+</style>
+
+<main>
+  <h1>AI DJ</h1>
+  <p class="subtitle">No board, no faders &mdash; it reads the room and mixes itself.</p>
+
+  <div id="banner"></div>
+
+  <section id="setup-card" class="card" style="display:none">
+    <h2>Set up</h2>
+
+    <div class="field">
+      <label for="library-path">Track library folder</label>
+      <input type="text" id="library-path" value="tracks" />
+    </div>
+
+    <div class="field">
+      <label>Add tracks</label>
+      <div class="upload-zone" id="upload-zone">
+        Click to choose audio files, or drag them here (mp3 / wav / flac / m4a / aiff / ogg)
+      </div>
+      <input type="file" id="file-input" multiple accept=".mp3,.wav,.flac,.m4a,.aiff,.ogg" style="display:none" />
+      <div class="file-list" id="file-list"></div>
+    </div>
+
+    <div class="checkbox-row">
+      <input type="checkbox" id="use-mic" checked />
+      <label for="use-mic">Use microphone to sense crowd energy</label>
+    </div>
+
+    <div class="row">
+      <div class="field">
+        <label for="input-device">Microphone</label>
+        <select id="input-device"></select>
+      </div>
+      <div class="field">
+        <label for="output-device">Speakers / output</label>
+        <select id="output-device"></select>
+      </div>
+    </div>
+
+    <button class="btn-primary" id="start-btn">Start the set</button>
+  </section>
+
+  <section id="live-card" class="card" style="display:none">
+    <div id="analyzing-view" class="center" style="display:none">
+      <div class="spinner"></div>
+      <p>Analyzing your tracks (BPM, key, energy)&hellip; this only happens once per file.</p>
+    </div>
+
+    <div id="running-view" style="display:none">
+      <div class="now-playing">
+        <div class="title" id="track-title">&mdash;</div>
+        <div class="meta" id="track-meta">&mdash;</div>
+      </div>
+      <div class="up-next" id="up-next"></div>
+
+      <div class="meter-label">
+        <span>Crowd energy</span>
+        <span class="level" id="crowd-level">&mdash;</span>
+      </div>
+      <div class="meter">
+        <div class="zone" data-zone="low"></div>
+        <div class="zone" data-zone="medium"></div>
+        <div class="zone" data-zone="high"></div>
+        <div class="zone" data-zone="peak"></div>
+      </div>
+
+      <div class="controls">
+        <button class="btn-hype" data-cmd="hype">Hype it up</button>
+        <button class="btn-chill" data-cmd="chill">Chill it out</button>
+        <button class="btn-next" data-cmd="next">Skip track</button>
+        <button class="btn-hold" data-cmd="hold">Hold the vibe</button>
+      </div>
+
+      <button class="btn-danger" id="stop-btn" style="margin-top:16px">Stop the set</button>
+
+      <div class="history">
+        Played so far:
+        <ul id="history-list"></ul>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+const ZONES = ["low", "medium", "high", "peak"];
+
+const el = (id) => document.getElementById(id);
+const bannerEl = el("banner");
+const setupCard = el("setup-card");
+const liveCard = el("live-card");
+const analyzingView = el("analyzing-view");
+const runningView = el("running-view");
+
+let uploadedLibrary = "tracks";
+let pollTimer = null;
+
+function showBanner(message, kind) {
+  if (!message) { bannerEl.innerHTML = ""; return; }
+  bannerEl.innerHTML = `<div class="banner ${kind}">${message}</div>`;
+}
+
+async function loadDevices() {
+  const res = await fetch("/api/devices");
+  const data = await res.json();
+  if (data.error) { showBanner(data.error, "error"); return; }
+
+  const inputSel = el("input-device");
+  const outputSel = el("output-device");
+  inputSel.innerHTML = data.inputs.map(d => `<option value="${d.index}">${d.name}</option>`).join("");
+  outputSel.innerHTML = data.outputs.map(d => `<option value="${d.index}">${d.name}</option>`).join("");
+}
+
+async function refreshFileList() {
+  const res = await fetch(`/api/library?library=${encodeURIComponent(el("library-path").value)}`);
+  const data = await res.json();
+  const list = el("file-list");
+  if (!data.files.length) {
+    list.textContent = "No tracks yet.";
+  } else {
+    list.textContent = `${data.files.length} track(s): ` + data.files.join(", ");
+  }
+}
+
+async function uploadFiles(files) {
+  if (!files.length) return;
+  const form = new FormData();
+  form.append("library", el("library-path").value);
+  for (const f of files) form.append("files", f);
+  const res = await fetch("/api/upload", { method: "POST", body: form });
+  const data = await res.json();
+  if (data.skipped && data.skipped.length) {
+    showBanner(`Skipped unsupported file(s): ${data.skipped.join(", ")}`, "error");
+  }
+  await refreshFileList();
+}
+
+function wireSetup() {
+  const uploadZone = el("upload-zone");
+  const fileInput = el("file-input");
+
+  uploadZone.addEventListener("click", () => fileInput.click());
+  fileInput.addEventListener("change", () => uploadFiles([...fileInput.files]));
+
+  uploadZone.addEventListener("dragover", (e) => { e.preventDefault(); uploadZone.classList.add("drag"); });
+  uploadZone.addEventListener("dragleave", () => uploadZone.classList.remove("drag"));
+  uploadZone.addEventListener("drop", (e) => {
+    e.preventDefault();
+    uploadZone.classList.remove("drag");
+    uploadFiles([...e.dataTransfer.files]);
+  });
+
+  el("use-mic").addEventListener("change", (e) => {
+    el("input-device").disabled = !e.target.checked;
+  });
+
+  el("start-btn").addEventListener("click", startSet);
+  el("stop-btn").addEventListener("click", stopSet);
+
+  document.querySelectorAll("[data-cmd]").forEach((btn) => {
+    btn.addEventListener("click", () => sendCommand(btn.dataset.cmd));
+  });
+}
+
+async function startSet() {
+  showBanner("", "");
+  const body = {
+    library: el("library-path").value,
+    use_mic: el("use-mic").checked,
+    input_device: el("use-mic").checked ? Number(el("input-device").value) : null,
+    output_device: el("output-device").value === "" ? null : Number(el("output-device").value),
+  };
+  const res = await fetch("/api/start", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  const data = await res.json();
+  if (data.error) { showBanner(data.error, "error"); return; }
+  poll();
+}
+
+async function stopSet() {
+  await fetch("/api/stop", { method: "POST" });
+  poll();
+}
+
+async function sendCommand(cmd) {
+  const res = await fetch("/api/command", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ command: cmd }) });
+  const data = await res.json();
+  if (data.error) showBanner(data.error, "error");
+}
+
+function renderMeter(level) {
+  document.querySelectorAll(".meter .zone").forEach((zoneEl) => {
+    const isLit = ZONES.indexOf(zoneEl.dataset.zone) <= ZONES.indexOf(level);
+    zoneEl.classList.toggle("lit", isLit);
+    zoneEl.classList.toggle(zoneEl.dataset.zone, isLit);
+  });
+  el("crowd-level").textContent = level || "—";
+}
+
+async function poll() {
+  const res = await fetch("/api/status");
+  const data = await res.json();
+
+  if (data.status === "idle" || data.status === "error") {
+    setupCard.style.display = "block";
+    liveCard.style.display = "none";
+    if (data.status === "error") showBanner(data.error, "error");
+    clearInterval(pollTimer);
+    pollTimer = null;
+    return;
+  }
+
+  setupCard.style.display = "none";
+  liveCard.style.display = "block";
+
+  if (data.status === "analyzing") {
+    analyzingView.style.display = "block";
+    runningView.style.display = "none";
+  } else if (data.status === "running") {
+    analyzingView.style.display = "none";
+    runningView.style.display = "block";
+
+    if (data.current_track) {
+      el("track-title").textContent = data.current_track.title;
+      el("track-meta").textContent = `${Math.round(data.current_track.bpm)} BPM · ${data.current_track.camelot} · energy ${Math.round(data.current_track.energy * 100)}%`;
+    }
+    el("up-next").textContent = data.queued_track
+      ? (data.transitioning ? `Blending into: ${data.queued_track}` : `Up next: ${data.queued_track}`)
+      : "";
+
+    if (data.crowd) renderMeter(data.crowd.level);
+
+    const historyEl = el("history-list");
+    historyEl.innerHTML = (data.history || []).slice().reverse().map(t => `<li>${t}</li>`).join("");
+  }
+
+  if (!pollTimer) pollTimer = setInterval(poll, 1000);
+}
+
+async function init() {
+  wireSetup();
+  setupCard.style.display = "block";
+  await loadDevices();
+  await refreshFileList();
+  el("library-path").addEventListener("change", refreshFileList);
+  await poll();
+}
+
+init();
+</script>

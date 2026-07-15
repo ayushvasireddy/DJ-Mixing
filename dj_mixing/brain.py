@@ -163,3 +163,7 @@ class DJBrain:
     @property
     def current_track(self) -> Optional[Track]:
         return self._current_track
+
+    @property
+    def queued_track(self) -> Optional[Track]:
+        return self._queued_track

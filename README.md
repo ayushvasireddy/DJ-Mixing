@@ -44,7 +44,38 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-## Usage
+## Usage: browser control panel (easiest)
+
+This is a local web app -- nothing leaves your machine, there's no account
+and no internet dependency once packages are installed.
+
+**macOS, no terminal needed after first setup:** double-click `run_app.command`
+in Finder. The first run creates the Python environment and installs
+everything (takes a few minutes); every run after that just starts the app.
+Your default browser opens automatically to the control panel.
+
+If Finder refuses to open it the first time ("unidentified developer"),
+right-click `run_app.command` → **Open** → confirm **Open** in the dialog.
+After that first override it'll double-click normally from then on.
+
+**Manually, from a terminal (any OS):**
+```bash
+source .venv/bin/activate
+python -m dj_mixing.webapp
+```
+
+In the page that opens:
+1. Set (or leave) the library folder, then drag your audio files into the
+   upload box (or click it to pick files) -- they get copied into that folder.
+2. Pick your microphone and speaker/output device from the dropdowns (or
+   uncheck "Use microphone" to run on manual control only).
+3. Click **Start the set**. First run analyzes each track (BPM/key/energy),
+   which takes a bit; after that it's cached and instant.
+4. Watch the crowd energy meter and now-playing card, or use the **Hype /
+   Chill / Skip / Hold** buttons to nudge it yourself.
+5. **Stop the set** when you're done.
+
+## Usage: command line
 
 Drop your tracks (mp3/wav/flac/m4a/aiff/ogg) into `tracks/` (or point
 `--library` elsewhere), then:
@@ -66,8 +97,9 @@ While it's running, type any of these + Enter as an optional manual nudge:
 | `next` / `skip`         | Force an immediate transition             |
 | `hold` / `stay`         | Keep the current vibe                     |
 
-No mic available, or don't want crowd sensing yet? Run with `--no-mic` and
-drive it entirely with those commands.
+No mic available, or don't want crowd sensing yet? Run with `--no-mic` (CLI)
+or uncheck "Use microphone" (web app) and drive it entirely with those
+commands/buttons.
 
 ## Testing
 
@@ -94,3 +126,12 @@ no microphone or speakers required to develop or CI this.
 - **Track selection has no long-term set arc** -- it optimizes the next
   track greedily each transition rather than planning a whole night's
   energy curve.
+- **No Spotify (by design, not oversight).** Spotify's terms don't allow
+  extracting playable audio from their app for outside processing, so real
+  crossfading/beatmatching against Spotify audio isn't possible. Bring your
+  own audio files instead -- that's what gives this full mixing control. A
+  future option could use Spotify's API purely to *import a playlist's track
+  list* or to remote-control Spotify playback (hard cuts only, no blending),
+  but that's a different feature from what this does today.
+- **Web app has no auth and binds to localhost only** -- it's meant to run on
+  the same machine you're DJing from, not to be exposed on a network.
