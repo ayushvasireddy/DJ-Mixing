@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.dj_mixing_cache.json
+tracks/*
+!tracks/.gitkeep
