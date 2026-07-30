@@ -6,6 +6,10 @@ and it plays a continuously beatmatched, harmonically-mixed set on its own --
 reacting to the crowd through a microphone, or to short typed commands if you
 want to nudge it.
 
+**New to this / no coding background?** See
+[`GETTING_STARTED.md`](GETTING_STARTED.md) for a plain-language walkthrough
+and fixes for common first-run snags.
+
 ## How it works
 
 1. **Analysis** (`dj_mixing/track.py`, `library.py`) -- every track in your
